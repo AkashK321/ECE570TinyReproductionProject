@@ -1,0 +1,29 @@
+# Ignore all files with a .log extension
+*.log
+
+# Ignore a specific file named debug.log
+debug.log
+
+# Ignore the entire 'build' directory
+build/
+
+# Ignore all files within a 'temp' directory, and the directory itself
+temp/
+
+# Ignore files created by macOS
+.DS_Store
+
+# Ignore files created by Windows
+Thumbs.db
+
+# Ignore node_modules directory (common in JavaScript projects)
+node_modules/
+
+# Ignore Python bytecode files
+__pycache__/
+
+# Ignore Java compiled class files
+*.class
+
+# Ignore Quarto generated files
+*_files/

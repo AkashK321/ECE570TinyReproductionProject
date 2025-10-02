@@ -2,6 +2,7 @@
 title: "Tiny Reproduction: Social Group LSTM"
 author: "Akash Kumar"
 format: revealjs
+scrollable: true
 ---
 
 ## Slide 1: Problem Statement & Goal
@@ -133,11 +134,9 @@ format: revealjs
 
 The first step was to implement a robust data loader to process the raw `UCY-zara01` dataset. The script successfully parses the text file, groups coordinates by pedestrian ID, and generates sequential training samples.
 
-To verify that the data is being loaded and interpreted correctly, we can visualize all the complete pedestrian trajectories present in the scene.
+To verify that the data is being loaded and interpreted correctly, I visualized all the complete pedestrian trajectories present in the scene.
 
-
-
-**Figure 1:** A plot of all raw pedestrian trajectories from the `zara01` dataset after being processed by the data loader. Each colored line represents the complete path of a single individual.
+**Figure 1:** ![A plot of all raw pedestrian trajectories from the `zara01` dataset after being processed by the data loader. Each colored line represents the complete path of a single individual.](https://github.com/AkashK321/ECE570TinyReproductionProject/blob/main/PedestrianTrajectoryPlot.png?raw=true)
 
 ---
 
