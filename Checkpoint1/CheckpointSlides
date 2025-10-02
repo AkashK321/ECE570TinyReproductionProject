@@ -1,0 +1,160 @@
+---
+title: "Tiny Reproduction: Social Group LSTM"
+author: "Akash Kumar"
+format: revealjs
+---
+
+## Slide 1: Problem Statement & Goal
+
+**Problem Statement:**
+
+Predicting pedestrian trajectories in dense crowds is a critical task for autonomous systems. However, standard prediction models often treat each person as an independent agent, ignoring a key aspect of human behavior: people frequently move in **social groups** (e.g., families, friends), which strongly influences their collective path. This oversight can lead to socially unaware and inaccurate predictions.
+
+**Primary Goal & Hypothesis:**
+
+This project is a "Tiny Reproduction" designed to verify the core scientific claim of the paper, *"SG-LSTM: Social Group LSTM for Robot Navigation Through Dense Crowds."*
+
+The central hypothesis is: **An LSTM-based model that explicitly incorporates social group dynamics will achieve more accurate trajectory predictions (lower error) than a strong baseline that only models individual-to-individual interactions.**
+
+---
+
+## Slide 2: Methodology Overview
+
+The approach is to distill the paper's core idea into a focused, reproducible experiment.
+
+**1. Data Processing:**
+- I will implement a custom PyTorch `Dataset` class to handle the **UCY (Zara01) dataset** pedestrian trajectory dataset.
+
+**2. Baseline Model: Social LSTM**
+- I will then implement the well-established Social LSTM model. This architecture serves as our primary baseline for comparison.
+- It uses an LSTM to model each pedestrian's individual trajectory and a "social pooling" layer to aggregate spatial information from nearby individuals.
+
+**3. Proposed Model: Simplified SG-LSTM**
+- Finally, I will augment the baseline by adding a **Group LSTM** module, as proposed in the original paper. This module is designed to learn a shared representation of a group's collective motion.
+- To simplify, I will replace the paper's complex Graph Convolutional Network (GCN) for group detection with a simple **heuristic pre-processing step** (e.g., distance-based clustering) to identify groups before training.
+
+**Evaluation:**
+- Both models will be trained and evaluated on a single, standard scene from the **UCY (Zara01) dataset**.
+- Performance will be compared using the standard metrics for this task: **Average Displacement Error (ADE)** and **Final Displacement Error (FDE)**.
+
+---
+
+## Slide 3: Code Snippet 1
+
+```python
+# Group trajectories by pedestrian ID
+peds = np.unique(data[:, 1])
+for ped_id in peds:
+    # Get all rows for the current pedestrian
+    ped_data = data[data[:, 1] == ped_id, :]
+    
+    # Store the trajectory [x, y] coordinates
+    all_ped_trajectories.append(ped_data[:, 2:])
+
+# Now, create observation/prediction sequences
+self.obs_traj = []
+self.pred_traj = []
+
+for traj in all_ped_trajectories:
+    # Check if the trajectory is long enough
+    if len(traj) < self.seq_len:
+        continue
+    
+    # Create sliding window sequences
+    # ... (code continues) ...
+```
+
+---
+
+## Slide 4: Explanation of Snippet 1
+
+**What the code does:**
+
+This snippet performs the first critical data processing step. It iterates through the raw, loaded data, which is a long list of all pedestrian locations at every timeframe.
+
+* It first identifies all unique `pedestrian_id` values present in the dataset.
+* It then loops through each unique ID and groups all the (x, y) coordinate data for that specific person into a single, continuous trajectory.
+* Finally, it stores each complete, individual trajectory in a list called `all_ped_trajectories`.
+
+**Why this is a key component:**
+
+This logic is the foundation of the entire data pipeline. The raw data is unstructured from a sequential modeling perspective. By grouping the data per-pedestrian, we transform it from a simple collection of points into a set of meaningful, ordered sequences. This enables the next step: generating training samples by creating sliding windows over these complete, individual paths. Without this grouping, we cannot create the observation/prediction pairs needed for training.
+
+---
+
+## Slide 5: Code Snippet 2
+```python
+# Create sliding window sequences
+num_sequences = (len(traj) - self.seq_len) // self.skip + 1
+
+for i in range(0, num_sequences * self.skip, self.skip):
+    # Observation sequence (the "past")
+    obs = traj[i : i + self.obs_len, :]
+    
+    # Prediction sequence (the "future" ground truth)
+    pred = traj[i + self.obs_len : i + self.seq_len, :]
+    
+    self.obs_traj.append(obs)
+    self.pred_traj.append(pred)
+
+# Convert to PyTorch Tensors
+self.obs_traj = torch.tensor(self.obs_traj, dtype=torch.float32)
+self.pred_traj = torch.tensor(self.pred_traj, dtype=torch.float32)
+```
+
+---
+
+---
+
+## Slide 6: Explanation of Snippet 2
+
+**What the code does:**
+
+This snippet takes the complete trajectories created in the first step and generates the actual training examples.
+
+* It iterates through each full pedestrian trajectory.
+* For each path, it creates a "sliding window" of a fixed length (e.g., 20 frames).
+* This window is then split into two parts:
+    * An **observation sequence** (`obs`): The first 8 frames, which serve as the model's input.
+    * A **prediction sequence** (`pred`): The subsequent 12 frames, which serve as the ground truth label.
+* The window slides across the entire trajectory, creating many (`observation`, `prediction`) pairs from a single pedestrian's path. These pairs are the final data used for training.
+
+**Why this is a key component:**
+
+This is the core logic that creates supervised learning samples. It turns the time-series problem into a standard input-output format that a neural network can learn from. The model is trained to predict the `pred` sequence given the `obs` sequence. The number of samples generated by this process directly impacts the model's ability to learn and generalize.
+
+---
+
+---
+format: revealjs
+---
+
+## Slide 7: Preliminary Result
+
+The first step was to implement a robust data loader to process the raw `UCY-zara01` dataset. The script successfully parses the text file, groups coordinates by pedestrian ID, and generates sequential training samples.
+
+To verify that the data is being loaded and interpreted correctly, we can visualize all the complete pedestrian trajectories present in the scene.
+
+
+
+**Figure 1:** A plot of all raw pedestrian trajectories from the `zara01` dataset after being processed by the data loader. Each colored line represents the complete path of a single individual.
+
+---
+
+## Slide 8: Result Analysis & Next Steps
+
+**Result Analysis:**
+
+The visualization on the previous slide confirms that our `data_loader.py` is correctly parsing and structuring the trajectory data. The plot reveals several key characteristics of the dataset that are crucial for our project:
+
+-   **High Density:** The overlapping paths clearly show a dense, complex crowd environment.
+-   **Linear Motion:** Many pedestrians follow relatively straight or gently curving paths, which is a good baseline characteristic for an LSTM to learn.
+-   **Visible Group Dynamics (The Core Problem):** Crucially, we can visually identify clusters of trajectories that move in parallel. These are the "social groups" at the heart of our project. This visualization validates that the phenomenon we aim to model is indeed present and observable in the data.
+
+**Next Steps:**
+
+With a functional data pipeline, the immediate next steps are to:
+
+1.  **Implement the Baseline Model:** Code the Social LSTM architecture, which will serve as the benchmark for our experiments.
+2.  **Train the Baseline:** Train the Social LSTM on the processed data until it achieves a reasonable performance, establishing a quantitative baseline for Average Displacement Error (ADE).
+3.  **Heuristic Group Detection:** Begin implementing the simplified, distance-based grouping function that will provide the social context for our main SG-LSTM model.
