@@ -56,7 +56,7 @@ if __name__ == '__main__':
     num_epochs = 50 
     
     # Directory to save plots
-    plot_dir = './plots/{embedding_dim}_{hidden_dim}_{num_layers}/train_{learning_rate}_{num_epochs}'
+    plot_dir = f'./plots/{embedding_dim}_{hidden_dim}_{num_layers}/train_{learning_rate}_{num_epochs}'
     if not os.path.exists(plot_dir):
         os.makedirs(plot_dir)
 
