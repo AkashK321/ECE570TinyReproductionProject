@@ -52,11 +52,11 @@ if __name__ == '__main__':
     num_layers = 20
 
     # Training parameters
-    learning_rate = 0.001
+    learning_rate = 0.0005
     num_epochs = 50 
     
     # Directory to save plots
-    plot_dir = './plots'
+    plot_dir = './plots_{embedding_dim}_{hidden_dim}_{num_layers}/train_{learning_rate}_{num_epochs}'
     if not os.path.exists(plot_dir):
         os.makedirs(plot_dir)
 
