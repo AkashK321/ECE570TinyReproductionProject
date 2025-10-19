@@ -49,11 +49,11 @@ if __name__ == '__main__':
     # Model parameters
     embedding_dim = 64
     hidden_dim = 64
-    num_layers = 10
+    num_layers = 5
 
     # Training parameters
-    learning_rate = 0.0005
-    num_epochs = 50 
+    learning_rate = 0.001
+    num_epochs = 25 
     
     # Directory to save plots
     plot_dir = f'./plots/{embedding_dim}_{hidden_dim}_{num_layers}/train_{learning_rate}_{num_epochs}'
