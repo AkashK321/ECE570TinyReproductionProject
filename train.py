@@ -49,7 +49,7 @@ if __name__ == '__main__':
     # Model parameters
     embedding_dim = 64
     hidden_dim = 64
-    num_layers = 20
+    num_layers = 10
 
     # Training parameters
     learning_rate = 0.0005
