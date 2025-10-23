@@ -1,0 +1,157 @@
+---
+title: "Project Checkpoint 2: SG-LSTM Tiny Reproduction"
+author: "Akash Kumar"
+format: revealjs
+scrollable: true
+---
+
+## Slide 1: Updated Problem Statement & Goal
+
+**Problem Statement:**
+Predicting pedestrian trajectories in dense crowds is a critical task for autonomous systems. Standard models often treat each person independently, ignoring the fact that people frequently move in **social groups**, which strongly influences their collective path.  
+
+**Primary Goal & Hypothesis:**
+This project is a "Tiny Reproduction" to verify the core claim of the *SG-LSTM* paper. The central hypothesis remains the same: **An LSTM-based model that explicitly incorporates social group dynamics will achieve more accurate trajectory predictions (lower error) than a strong baseline that only models individual-to-individual interactions.**
+
+*(There have been no refinements or changes to the primary goal since Checkpoint 1.)*
+
+---
+
+## Slide 2: Updated Methodology & Progress
+
+**Updated Methodology:**
+The approach remains to distill the paper's idea into a focused experiment.  
+1. **Baseline Model:** I am implementing a **Vanilla LSTM** Encoder-Decoder as a foundational baseline. This model makes predictions based *only* on a pedestrian's own past trajectory, containing no social awareness.  
+2. **Proposed Model:** After establishing the baseline, I will implement the simplified SG-LSTM to show a similar level of improvement as demonstrated in the reference paper.  
+
+**Progress Since Checkpoint 1:**
+* **Data Pipeline:** A robust `data_loader.py` has been fully implemented and verified. It correctly parses the Zara01 dataset, processes individual trajectories, and generates batches of `(observation, prediction)` tensors for training.
+* **Baseline Model Implemented:** The Vanilla LSTM model architecture has been coded as a `torch.nn.Module` in `vanilla_lstm_model.py`.
+* **Training Script Implemented:** A complete `train.py` script has been developed. It handles the training loop, loss calculation, optimization, and final evaluation using ADE and FDE metrics.
+
+---
+
+## Slide 3: Code Snippet 1 (Model Definition)
+
+```python
+# From vanilla_lstm_model.py
+
+class VanillaLSTM(nn.Module):
+    def __init__(self, embedding_dim=64, hidden_dim=64, num_layers=1):
+        super(VanillaLSTM, self).__init__()
+        self.hidden_dim = hidden_dim
+
+        # Input embedding layer
+        self.embedding = nn.Linear(2, embedding_dim)
+        
+        # LSTM Encoder
+        self.encoder = nn.LSTM(embedding_dim, hidden_dim, num_layers, batch_first=True)
+        
+        # LSTM Decoder
+        self.decoder = nn.LSTM(embedding_dim, hidden_dim, num_layers, batch_first=True)
+        
+        # Output layer
+        self.fc = nn.Linear(hidden_dim, 2)
+```
+---
+
+## Slide 4: Explanation of Snippet 1
+
+**What the code does:**
+
+This snippet defines the architecture of my essential baseline model: a Vanilla LSTM with an encoder-decoder structure.
+
+* `embedding`: A linear layer that projects the input (x, y) coordinates into a higher-dimensional space, allowing the model to learn a richer representation.
+* `encoder`: An LSTM layer that processes the sequence of observed trajectory points and "encodes" the motion information into its final hidden and cell states.
+* `decoder`: A second LSTM layer that takes the final states from the encoder and autoregressively predicts the future trajectory, one step at a time.
+* `fc`: A final linear layer that maps the hidden state from the decoder back to a 2D (x, y) coordinate for the final prediction.
+
+**Why this is a key component:**
+
+This is the **scientific control** for the entire experiment. It represents the simplest reasonable approach to trajectory prediction. By training and evaluating this model first, it establishes a performance baseline (in terms of ADE/FDE) that has zero social awareness. The goal of SG-LSTM will be to demonstrate a quantifiable improvement over this fundamental benchmark.
+
+---
+
+## Slide 5: Code Snippet 2 (Training Loop)
+
+```python
+# From train.py
+
+for epoch in range(num_epochs):
+    model.train() 
+    epoch_loss = 0.0
+    
+    for batch_idx, (obs_traj, pred_traj_true) in enumerate(loader):
+        # Move data to the device
+        obs_traj = obs_traj.to(device)
+        pred_traj_true = pred_traj_true.to(device)
+        # Zero the gradients
+        optimizer.zero_grad()
+        # Forward pass: get model prediction
+        pred_traj_fake = model(obs_traj, pred_len=pred_len)
+        # Calculate the loss
+        loss = loss_fn(pred_traj_fake, pred_traj_true)
+        epoch_loss += loss.item()
+        # Backward pass and optimization
+        loss.backward()
+        optimizer.step()
+
+    avg_epoch_loss = epoch_loss / len(loader)
+    loss_history.append(avg_epoch_loss)
+```
+
+---
+
+## Slide 6: Explanation of Snippet 2
+
+**What the code does:**
+
+This snippet shows the core training loop from the `train.py` script. For each epoch (a full pass over the dataset), this code:
+
+* Iterates through every batch of data provided by the `DataLoader`.
+* Moves the observation and ground-truth trajectories to the correct compute device (CPU or GPU).
+* Performs a forward pass by feeding the observed trajectories to the model to get its predictions.
+* Calculates the loss (in this case, Mean Squared Error) by comparing the model's predictions (`pred_traj_fake`) to the actual future paths (`pred_traj_true`).
+* Performs a backward pass (`loss.backward()`) to compute gradients, and tells the optimizer to `step()` to update the model's weights to minimize the loss.
+
+**Why this is a key component:**
+
+This is the engine of the learning process. This loop is where the model actually learns to predict trajectories by iteratively adjusting its internal weights based on its mistakes. Without this component, the model is just an untrained set of layers. The successful implementation of this training loop is the primary milestone achieved since Checkpoint 1, enabling me to obtain the first quantitative results.
+
+---
+
+## Slide 7: New Preliminary Result
+
+**Result: Baseline Model Performance**
+
+The Vanilla LSTM baseline model was trained for 50 epochs on the Zara01 dataset. The training process successfully converged, as shown by the decreasing loss curve. The final quantitative performance on the training data was measured using Average Displacement Error (ADE) and Final Displacement Error (FDE).
+
+Multiple values were tested for number of layers and learning rate. The lowest error metrics were generated with a Vanilla-LSTM model that has 10 layers and a learning rate of 0.0005
+
+| Metric | Value (in meters) |
+| :--- | :---: |
+| ADE | 0.6604 |
+| FDE | 0.9725 |
+
+![Training Loss Curve for the Baseline LSTM Model](https://github.com/AkashK321/ECE570TinyReproductionProject/blob/main/plots/64_64_10/train_0.0005_50/training_loss.png?raw=true)
+![Evaluation Examples](https://github.com/AkashK321/ECE570TinyReproductionProject/blob/main/plots/64_64_10/train_0.0005_50/evaluation_examples.png?raw=true)
+
+---
+
+## Slide 8: Result Analysis & Next Steps
+
+**Result Analysis:**
+
+The quantitative results (ADE: 0.6604m, FDE: 0.9725m) establish a strong performance baseline for the Vanilla LSTM model after hyperparameter tuning (10 layers, LR=0.0005) on the Zara01 dataset. The training loss curve confirms successful convergence, indicating the model learned effectively from the data.
+Additionally, the ADE and FDE are similar to the results presented within the SG-LSTM paper where they found the Vanilla-LSTM model to have an ADE of 0.60 and FDE of 1.31 when evaluated on the ETH dataset (note: the ETH and Zara01 are standard benchmarks in pedestrian trajectory prediction, thus the evaluation results on both datasets is comparable). 
+
+The evaluation examples visually demonstrate the model's ability to capture general motion trends. However, as expected from a non-social model, it likely struggles in dense interaction zones and doesn't explicitly account for coordinated group movements visible in the raw data plot (Slide 7, Checkpoint 1). This performance level serves as a direct, quantitative benchmark against which I can measure the impact of incorporating social group dynamics, aligning with the comparison structure in the original SG-LSTM paper.
+
+**Next Steps:**
+
+Based on the established Vanilla LSTM baseline and the project goal, I will proceed directly to implementing the core components of the SG-LSTM:
+
+1.  **Implement Heuristic Group Detection:** Develop the planned distance-based clustering pre-processing step to identify potential social groups within the Zara01 data.
+2.  **Implement the Group LSTM Module:** Code the specific LSTM architecture designed to process and represent the collective motion of identified groups.
+3.  **Integrate Group Context:** Modify the prediction model to incorporate the information from the Group LSTM module alongside individual trajectory information.
+4.  **Train and Compare:** Train the simplified SG-LSTM model and compare its ADE/FDE directly against the achieved Vanilla LSTM baseline (ADE: 0.6604, FDE: 0.9725) to test the central hypothesis.
