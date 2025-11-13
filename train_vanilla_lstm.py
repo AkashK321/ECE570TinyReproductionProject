@@ -2,10 +2,11 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
-from data_loader import TrajectoryDataset  # Import the dataset class
+from vanilla_data_loader import TrajectoryDataset  # Import the dataset class
 from vanilla_lstm_model import VanillaLSTM # Import the model class
 import matplotlib.pyplot as plt
 import os
+import time
 
 # --- Helper Functions for Evaluation ---
 def ade(pred, true):
@@ -96,6 +97,7 @@ if __name__ == '__main__':
 
     # --- 5. Evaluation ---
     print("Evaluating model...")
+    eval_start_time = time.time()
     model.eval() 
     total_ade = 0
     total_fde = 0
@@ -111,9 +113,13 @@ if __name__ == '__main__':
     avg_ade = total_ade / len(loader)
     avg_fde = total_fde / len(loader)
     
+    eval_end_time = time.time()
+    eval_duration = eval_end_time - eval_start_time
+    
     print(f"\n--- Evaluation Results ---")
     print(f"Average Displacement Error (ADE): {avg_ade:.4f}")
     print(f"Final Displacement Error (FDE): {avg_fde:.4f}")
+    print(f"Evaluation took: {eval_duration:.2f} seconds")
     
     # --- 6. Plotting Training Loss ---
     plt.figure()
