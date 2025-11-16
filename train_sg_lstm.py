@@ -35,11 +35,11 @@ if __name__ == '__main__':
     
     # Model parameters
     embedding_dim = 64 # Embedding size for BOTH individual and group
-    hidden_dim = 64   # Hidden dim (might need to be larger to handle combined info)
+    hidden_dim = 128   # Hidden dim (might need to be larger to handle combined info)
     num_layers = 10
 
     # Training parameters
-    learning_rate = 0.001
+    learning_rate = 0.0005
     num_epochs = 50 
     
     plot_dir = './plots_sg_lstm'
