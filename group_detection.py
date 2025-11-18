@@ -95,7 +95,7 @@ if __name__ == '__main__':
         
         # --- 2. Pick a Frame and Get Data ---
         # Let's pick a frame we know is busy from the previous plot
-        target_frame_id = 70.0 
+        target_frame_id = 20.0 
         ped_coords = get_frame_data(raw_data, target_frame_id)
         
         if len(ped_coords) == 0:
