@@ -86,7 +86,7 @@ if __name__ == '__main__':
     
     # --- 1. Load Raw Data ---
     # We load the raw data, not the processed data, as we need per-frame info
-    data_file_path = './datasets/zara1/train/crowds_zara02_train.txt' # Adjust to your file
+    data_file_path = './datasets/zara1/train/students001_train.txt' # Adjust to your file
     if not os.path.exists(data_file_path):
         print(f"Error: Could not find raw data file at {data_file_path}")
     else:
