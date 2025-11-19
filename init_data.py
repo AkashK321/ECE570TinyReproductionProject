@@ -9,7 +9,7 @@ def download_and_filter_data():
     zip_filename = 'datasets.zip'
     extract_root = '.'           # Where to unzip (current dir)
     dataset_dir = 'datasets'     # The specific folder name created by the zip
-    folder_to_keep = 'zara1'
+    folder_to_keep = 'zara1'     # The folder we want to keep (this can be modified to download more/less/or different data)
 
     try:
         # 1. Download
@@ -31,7 +31,6 @@ def download_and_filter_data():
             for item_name in os.listdir(dataset_dir):
                 item_path = os.path.join(dataset_dir, item_name)
                 
-                # We only care about directories
                 if os.path.isdir(item_path):
                     if item_name != folder_to_keep:
                         print(f"  - Removing: {item_name}")
